@@ -44,6 +44,7 @@ using helloworld::Greeter;
 using helloworld::HelloReply;
 using helloworld::HelloRequest;
 
+// bazel run //examples/cpp/helloworld:greeter_async_client
 class GreeterClient {
  public:
   explicit GreeterClient(std::shared_ptr<Channel> channel)
@@ -69,14 +70,18 @@ class GreeterClient {
 
     // Storage for the status of the RPC upon completion.
     Status status;
-
+    // auto channel = grpc::CreateCustomChannel(
+    //     "error:///", grpc::InsecureChannelCredentials(), {});
+    // context.TryCancel();
     std::unique_ptr<ClientAsyncResponseReader<HelloReply> > rpc(
         stub_->AsyncSayHello(&context, request, &cq));
-
+    // rpc->ReadInitialMetadata((void*)2);
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the integer 1.
     rpc->Finish(&reply, &status, (void*)1);
+    // cq.Shutdown();
+
     void* got_tag;
     bool ok = false;
     // Block until the next result is available in the completion queue "cq".
@@ -86,14 +91,19 @@ class GreeterClient {
 
     // Verify that the result from "cq" corresponds, by its tag, our previous
     // request.
-    CHECK_EQ(got_tag, (void*)1);
+    // CHECK_EQ(got_tag, (void*)1);
     // ... and that the request was completed successfully. Note that "ok"
     // corresponds solely to the request for updates introduced by Finish().
     CHECK(ok);
+    auto metadata = context.GetServerInitialMetadata();
+    std::cerr << "GetServerInitialMetadata size: " << metadata.size() << "\n";
+    for (const auto& x : metadata) {
+      std::cerr << x.first << " : " << x.second << "\n";
+    }
 
     // Act upon the status of the actual RPC.
     if (status.ok()) {
-      return reply.message();
+      return "RPC success: " + reply.message();
     } else {
       return "RPC failed";
     }

@@ -47,6 +47,7 @@ using helloworld::Greeter;
 using helloworld::HelloReply;
 using helloworld::HelloRequest;
 
+//  bazel run //examples/cpp/helloworld:greeter_async_server
 class ServerImpl final {
  public:
   ~ServerImpl() {
@@ -93,7 +94,8 @@ class ServerImpl final {
       if (status_ == CREATE) {
         // Make this instance progress to the PROCESS state.
         status_ = PROCESS;
-
+        ctx_.AddInitialMetadata("custom-server-metadata",
+                                "initial metadata value");
         // As part of the initial CREATE state, we *request* that the system
         // start processing SayHello requests. In this request, "this" acts are
         // the tag uniquely identifying the request (so that different CallData
